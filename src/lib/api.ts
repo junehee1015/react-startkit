@@ -1,0 +1,71 @@
+import ky, { HTTPError } from 'ky'
+import type { Options } from 'ky'
+import { useAuthStore } from '@/stores/auth'
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
+const _apiInstance = ky.create({
+  prefixUrl: BASE_URL,
+  retry: 0,
+  hooks: {
+    beforeRequest: [
+      (request) => {
+        const accessToken = useAuthStore.getState().accessToken
+        if (accessToken) {
+          request.headers.set('Authorization', `Bearer ${accessToken}`)
+        }
+      },
+    ],
+  },
+})
+
+// refreshtoken을 위한 순수 instance
+export const refreshRequest = ky.create({
+  prefixUrl: BASE_URL,
+  retry: 0,
+})
+
+let refreshPromise: Promise<void> | null = null
+
+export const request = async <T = unknown>(url: string, options: Options & { _retry?: boolean } = {}): Promise<T> => {
+  try {
+    return await _apiInstance(url, options).json<T>()
+  } catch (e) {
+    const error = e as HTTPError
+    const isAuthPath = url.includes('/login') || url.includes('/refresh')
+
+    if (error.response?.status === 401 && !options._retry && !isAuthPath) {
+      if (!refreshPromise) {
+        refreshPromise = useAuthStore
+          .getState()
+          .refreshAccessToken()
+          .finally(() => {
+            refreshPromise = null
+          })
+      }
+
+      try {
+        await refreshPromise
+
+        const retryOptions: Options & { _retry?: boolean } = {
+          ...options,
+          _retry: true,
+        }
+
+        return await _apiInstance(url, retryOptions).json<T>()
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError)
+
+        useAuthStore.getState().logout()
+
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+
+        throw refreshError
+      }
+    }
+
+    throw error
+  }
+}
