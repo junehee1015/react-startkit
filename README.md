@@ -96,15 +96,17 @@ VITE_APP_TITLE=React Startkit
 **Step 1: API 통신 정의 (`src/api/*.ts`)**
 오직 네트워크 요청만 담당합니다. `ky` 래퍼 인스턴스를 활용합니다.
 
-```typescript
+```ts
 import { request } from '@/lib/api'
 
+// GET 요청
 export const fetchUsers = async (page: number) => {
   return await request('users', {
     searchParams: { page },
   })
 }
 
+// POST 요청
 export const createUser = async (body: Partial<User>) => {
   return await request('users', {
     method: 'POST',
@@ -116,109 +118,132 @@ export const createUser = async (body: Partial<User>) => {
 **Step 2: TanStack Query 코로케이션 및 에러 처리 (`src/hooks/queries/*.ts`)**
 **Query Key Factory Pattern**을 적용하여 키를 중앙 관리하고, 비즈니스 로직(useQuery)을 함께(Co-location) 작성합니다.
 
-```typescript
-import { useEffect } from 'react'
+```ts
 import { useQuery, useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { fetchUsers, createUser } from '@/api/users'
 
+// Key Factory Pattern
 export const userKeys = {
   all: ['users'] as const,
   list: (page: number) => [...userKeys.all, 'list', page] as const,
 }
 
-// 1. 명령형 훅 (데이터가 없을 수도 있음)
+// 1. 일반 Query (ErrorBoundary 미사용 시 / 옵셔널 체이닝 필요)
 export const useUsers = (page: number) => {
-  const query = useQuery({
+  return useQuery({
     queryKey: userKeys.list(page),
     queryFn: () => fetchUsers(page),
   })
-
-  // 훅 내부에서 백그라운드 에러 알림 처리
-  useEffect(() => {
-    if (query.isError) toast.error('데이터 로드 실패')
-  }, [query.isError])
-
-  return query
 }
 
-// 2. 선언적 훅 (데이터가 100% 존재함을 보장함)
+// 2. Suspense Query + Select (데이터 가공)
 export const useUsersSuspense = (page: number) => {
   return useSuspenseQuery({
     queryKey: userKeys.list(page),
     queryFn: () => fetchUsers(page),
+    // 💡 select: 원본 캐시는 유지하면서 컴포넌트 렌더링용 데이터를 가공합니다.
+    select: (users) =>
+      users.map((user) => ({
+        ...user,
+        displayName: `[${user.role}] ${user.name}`,
+      })),
+  })
+}
+
+// 3. Mutation (데이터 생성/수정/삭제)
+export const useCreateUser = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      toast.success('성공적으로 생성되었습니다!')
+      // 생성 완료 후 리스트 캐시를 무효화하여 자동 새로고침 유도
+      queryClient.invalidateQueries({ queryKey: userKeys.all })
+    },
   })
 }
 ```
 
-**Step 3: 명령형 렌더링 (Background Fetching 용도)**
-화면 전체를 로딩으로 덮고 싶지 않거나, 백그라운드에서 데이터를 갱신할 때 사용하는 전통적인 방식입니다.
+**Step 3: 명령형 렌더링 (QueryErrorBoundary 미사용)**
+사이드바의 작은 위젯처럼 "에러가 나도 앱 전체나 메인 화면이 멈추면 안 되는 가벼운 UI"에 사용합니다. 컴포넌트 내부에서 isPending과 isError를 직접 체크하여 조용히 처리합니다.
 
 ```tsx
-import { useState } from 'react'
-import { useUsers } from '@/hooks/queries/useUsers'
+import { useUsers, useCreateUser } from '@/hooks/queries/useUsers'
 
-export function ImperativeUserList() {
-  const [page, setPage] = useState(1)
-
-  // 훅 내부에서 isLoading, isError 등을 전부 뽑아와야 합니다.
-  const { data: users, isPending, isError, error } = useUsers(page)
+export function UserWidget() {
+  // ErrorBoundary가 없으므로 isPending, isError를 사용해서 분기 처리해야 합니다.
+  const { data: users, isPending, isError, refetch } = useUsers(1)
+  const mutation = useCreateUser()
 
   // 1. 에러 체크 UI
   if (isError) {
-    return <div className="text-red-500">에러: {error.message}</div>
+    return (
+      <div>
+        데이터 로드 실패 <button onClick={() => refetch()}>다시 시도</button>
+      </div>
+    )
   }
+
+  // 2. 로딩 체크 UI
+  if (isPending) return <div>위젯 로딩 중...</div>
 
   return (
     <div>
-      {/* 2. 로딩 체크 UI */}
-      {isPending ? (
-        <div>로딩 중...</div>
-      ) : (
-        <ul>
-          {/* 3. 데이터가 없을 수도 있으므로 옵셔널 체이닝(?) 필수 */}
-          {users?.map((user) => (
-            <li key={user.id}>{user.name}</li>
-          ))}
-        </ul>
-      )}
+      <ul>
+        {users?.map((u) => (
+          <li key={u.id}>{u.name}</li>
+        ))}
+      </ul>
+
+      {/* Mutation 사용 예시 */}
+      <button onClick={() => mutation.mutate({ name: 'New User' })} disabled={mutation.isPending}>
+        {mutation.isPending ? '생성 중...' : '새 유저 추가'}
+      </button>
     </div>
   )
 }
 ```
 
-**Step 4: 선언적 렌더링 (초기 렌더링 블로킹 용도)**
-React 18의 핵심 패턴입니다. `useSuspenseQuery`를 사용하면 컴포넌트 내부의 로딩/에러 체크 코드가 완전히 사라집니다. 로딩 상태는 부모의 `<Suspense>`가, 에러 상태는 `<ErrorBoundary>`가 낚아채어 처리합니다.
+**Step 4: 선언적 렌더링 (QueryErrorBoundary 사용)**
+페이지의 메인 데이터처럼 "이 데이터가 없으면 화면을 보여주는 의미가 없는 핵심 UI"에 사용합니다. 훅 내부의 에러/로딩 체크 로직이 완벽히 사라지며, 부모의 <QueryErrorBoundary>가 에러 복구(Reset)를 전담합니다.
 
 ```tsx
-// 터미널에서 pnpm add react-error-boundary 설치 필요
 import { Suspense } from 'react'
-import { ErrorBoundary } from 'react-error-boundary'
+import { QueryErrorBoundary } from '@/components/common/QueryErrorBoundary'
 import { useUsersSuspense } from '@/hooks/queries/useUsers'
 
-// 1. 하위 컴포넌트: 에러/로딩 체크가 완벽히 사라진 동기적인 코드 모습
+// 1. 하위 컴포넌트: 비즈니스 로직(데이터)과 UI 렌더링에만 100% 집중합니다.
 function DeclarativeUserList() {
-  // useSuspenseQuery를 쓰면 data가 무조건 존재함을 보장합니다. (옵셔널 체이닝 불필요)
+  // 🚨 에러나 로딩을 체크하는 코드가 없습니다! 데이터가 무조건 있다고 보장됩니다.
   const { data: users } = useUsersSuspense(1)
 
   return (
-    <ul>
-      {users.map(user => <li key={user.id}>{user.name}</li>)}
-    </ul>
+    <ul>{users.map(user => <li key={user.id}>{user.name}</li>)}</ul>
   )
 }
 
-// 2. 부모 래퍼 컴포넌트: 에러와 로딩을 선언적으로 위임받아 처리
+// 💡 (선택) 특정 페이지 전용 커스텀 에러 화면이 필요할 때 주입할 컴포넌트
+// import { FallbackProps } from 'react-error-boundary'
+// const CustomError = ({ error, resetErrorBoundary }: FallbackProps) => (
+//   <div className="p-4 bg-red-900 text-white">
+//     커스텀 에러: {error.message}
+//     <button onClick={resetErrorBoundary}>복구 시도</button>
+//   </div>
+// )
+
+// 2. 부모 래퍼 컴포넌트: 에러와 로딩 상태를 '선언적'으로 위임받아 처리합니다.
 export function UsersPage() {
   return (
-    {/* 가장 바깥에서 에러를 캐치합니다 */}
-    <ErrorBoundary fallback={<div className="text-red-500">데이터 로드 실패</div>}>
-      {/* 데이터를 불러오는 동안 fallback(스켈레톤)을 보여줍니다 */}
-      <Suspense fallback={<div className="animate-pulse">데이터 불러오는 중...</div>}>
-        {/* 오직 "성공적으로 데이터를 가져온 상태"만 렌더링에 집중합니다 */}
+    {/* 가장 바깥에서 에러를 캐치하고 '다시 시도(Reset)' 버튼을 제공합니다 */}
+    {/* 💡 커스텀 에러 사용 시: <QueryErrorBoundary FallbackComponent={CustomError}> */}
+    <QueryErrorBoundary>
+      {/* 데이터를 불러오는 동안 fallback(스켈레톤 UI)을 보여줍니다 */}
+      <Suspense fallback={<div className="animate-pulse">페이지 로딩 중...</div>}>
         <DeclarativeUserList />
       </Suspense>
-    </ErrorBoundary>
+    </QueryErrorBoundary>
   )
 }
 ```

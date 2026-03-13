@@ -1,6 +1,18 @@
-import { QueryClient } from '@tanstack/react-query'
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 export const queryClient = new QueryClient({
+  // 전역 에러 처리
+  // queryCache: new QueryCache({
+  //   onError: (error, query) => {
+  //     toast.error(error)
+  //   },
+  // }),
+  // mutationCache: new MutationCache({
+  //   onError: () => {
+  //     toast.error(error)
+  //   },
+  // }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5분

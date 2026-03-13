@@ -48,10 +48,19 @@ export const useAuthStore = create<AuthState>()(
 
       refreshAccessToken: async () => {
         try {
+          const refreshToken = get().refreshToken
+
+          if (!refreshToken) throw new Error('No refresh token')
+
+          // const response = await ky
+          //   .post('refresh', {
+          //     prefixUrl: import.meta.env.VITE_PREFIX_URL || 'http://localhost:8080/api',
+          //     json: { refreshToken },
+          //   })
+          //   .json<{ accessToken: string }>()
+
           // API 지연 시뮬레이션, 실제 API 호출 시 순수 인스턴스로 호출해야 함.
           await new Promise((resolve) => setTimeout(resolve, 300))
-
-          if (!get().refreshToken) throw new Error('No refresh token')
 
           set({ accessToken: 'new-access-token-' + Date.now() })
         } catch (error) {
@@ -62,7 +71,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, accessToken: null, refreshToken: null })
-        localStorage.removeItem('auth')
+        useAuthStore.persist.clearStorage()
       },
     }),
     {

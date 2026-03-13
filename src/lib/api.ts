@@ -2,10 +2,8 @@ import ky, { HTTPError } from 'ky'
 import type { Options } from 'ky'
 import { useAuthStore } from '@/stores/auth'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
-
 const _apiInstance = ky.create({
-  prefixUrl: BASE_URL,
+  prefixUrl: import.meta.env.VITE_PREFIX_URL || 'http://localhost:8080/api',
   retry: 0,
   hooks: {
     beforeRequest: [
@@ -19,11 +17,14 @@ const _apiInstance = ky.create({
   },
 })
 
-// refreshtoken을 위한 순수 instance
-export const refreshRequest = ky.create({
-  prefixUrl: BASE_URL,
-  retry: 0,
-})
+const redirectLogin = async () => {
+  try {
+    const { router } = await import('@/main')
+    if (router.state.location.pathname !== '/login') router.navigate({ to: '/login', replace: true })
+  } catch {
+    location.href = '/login'
+  }
+}
 
 let refreshPromise: Promise<void> | null = null
 
@@ -58,9 +59,7 @@ export const request = async <T = unknown>(url: string, options: Options & { _re
 
         useAuthStore.getState().logout()
 
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
-        }
+        redirectLogin()
 
         throw refreshError
       }
