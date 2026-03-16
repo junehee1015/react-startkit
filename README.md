@@ -6,6 +6,7 @@
 ## ✨ Key Features
 
 - **Architecture**:
+  - **FSD-Lite**:
   - **Co-location**: 도메인별 훅(Hook)과 쿼리 키(Key Factory)의 응집도를 높인 구조
   - **3-Layer Fetching**: `API Definition` -> `Custom Query Hook` -> `View Component`
 - **Developer Experience**:
@@ -40,13 +41,18 @@ src/
 ├── assets/               # 정적 리소스 (Images, Fonts)
 ├── components/
 │   ├── layout/           # 레이아웃 구성 요소 (Header.tsx, AppSidebar.tsx...)
-│   ├── guide/            # (개발 가이드용 컴포넌트 - 배포 시 제외)
 │   └── ui/               # Shadcn UI 컴포넌트 모음 (수정 가능)
+├── features/             # 도메인별 비즈니스 로직
+│   └── auth/             # 인증 도메인
+│       ├── api/
+│       ├── components/
+│       └── constants/
+│       ├── hooks/
 ├── hooks/
-│   ├── queries/          # TanStack Query 커스텀 훅 및 Key Factory (useUsers.ts...)
 │   └── useConfirm.ts     # UI 제어용 커스텀 훅
 ├── lib/                  # 전역 유틸리티 및 설정
 │   ├── api.ts            # ky 인스턴스 (Interceptor & Token Logic)
+│   ├── query-client.ts   # 전역 TanStack Query 설정 (전역 성공, 에러 처리 등)
 │   └── utils.ts          # Tailwind 클래스 병합 함수 등
 ├── routes/               # TanStack Router 기반 파일 라우팅 폴더 (Flat Routes)
 ├── stores/               # Zustand 전역 스토어 (auth.ts...)
