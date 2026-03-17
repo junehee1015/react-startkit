@@ -6,7 +6,7 @@
 ## ✨ Key Features
 
 - **Architecture**:
-  - **FSD-Lite**:
+  - **FSD-Lite**: 도메인 응집도(Domain Colocation)의 핵심 철학만 적용한 아키텍처
   - **Co-location**: 도메인별 훅(Hook)과 쿼리 키(Key Factory)의 응집도를 높인 구조
   - **3-Layer Fetching**: `API Definition` -> `Custom Query Hook` -> `View Component`
 - **Developer Experience**:
@@ -37,17 +37,15 @@
 
 ```text
 src/
-├── api/                  # 도메인별 API 네트워크 요청 정의 (users.ts, auth.ts...)
 ├── assets/               # 정적 리소스 (Images, Fonts)
-├── components/
+├── components/           # 공통 컴포넌트
 │   ├── layout/           # 레이아웃 구성 요소 (Header.tsx, AppSidebar.tsx...)
-│   └── ui/               # Shadcn UI 컴포넌트 모음 (수정 가능)
+│   └── ui/               # Shadcn UI 컴포넌트 모음
 ├── features/             # 도메인별 비즈니스 로직
-│   └── auth/             # 인증 도메인
-│       ├── api/
-│       ├── components/
-│       └── constants/
-│       ├── hooks/
+│   └── auth/
+│       ├── api/          # 서버 통신 로직 (index.ts, user.api.ts 등)
+│       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores 통합)
+│       └── ui/           # 도메인 별 컴포넌트
 ├── hooks/
 │   └── useConfirm.ts     # UI 제어용 커스텀 훅
 ├── lib/                  # 전역 유틸리티 및 설정
@@ -55,7 +53,7 @@ src/
 │   ├── query-client.ts   # 전역 TanStack Query 설정 (전역 성공, 에러 처리 등)
 │   └── utils.ts          # Tailwind 클래스 병합 함수 등
 ├── routes/               # TanStack Router 기반 파일 라우팅 폴더 (Flat Routes)
-├── stores/               # Zustand 전역 스토어 (auth.ts...)
+├── stores/               # Zustand 전역 스토어 (authStore.ts...)
 └── types/                # 전역 TypeScript 인터페이스 및 Zod 스키마
 ```
 
@@ -271,6 +269,7 @@ export function UsersPage() {
 - `login.tsx` → `/login`
 - `_auth.tsx` : URL 경로를 만들지 않는 Pathless 인증 레이아웃 가드
 - `_auth.dashboard.tsx` → `/dashboard` (`_auth`의 보호를 받음)
+- `_auth/dashboard.tsx` → `/dashboard` (`_auth/` 폴더로 만들어도 동일함)
 - `users.$userId.tsx` → `/users/123` (동적 파라미터 `Route.useParams()`)
 
 ### 4. Type-Safe Navigation
@@ -296,7 +295,7 @@ import { Link } from '@tanstack/react-router'
 | **Component File**    | PascalCase | `Button.tsx`, `Header.tsx`         |
 | **Route File**        | Flat Case  | `_auth.dashboard.tsx`, `login.tsx` |
 | **Custom Hook**       | camelCase  | `useMobile.ts`, `useConfirm.ts`    |
-| **API Module**        | camelCase  | `users.ts`, `auth.ts`              |
+| **API Module**        | kebab-case | `users.api.ts`, `auth.api.ts`      |
 | **Variable/Function** | camelCase  | `handleSubmit`, `fetchData`        |
 | **Interface/Type**    | PascalCase | `User`, `LoginPayload`             |
 

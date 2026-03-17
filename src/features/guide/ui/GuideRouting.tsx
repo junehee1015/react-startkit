@@ -81,17 +81,14 @@ function CodeBlock({ filename, htmlCode }: { filename: string; htmlCode: string 
   )
 }
 
-// ----------------------------------------------------------------------------
-// 코드 스니펫 HTML 상수 (VS Code 렌더링 완벽 싱크로율)
-// ----------------------------------------------------------------------------
-
 const step1Code = `
 <span style="color:#6a9955">// src/routes/</span>
 <span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">__root.tsx</span><span style="color:#6a9955">          // 최상위 루트 레이아웃 (모든 페이지를 감쌈)</span>
 <span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">index.tsx</span><span style="color:#6a9955">           // 메인 홈 ('/')</span>
 <span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">login.tsx</span><span style="color:#6a9955">           // 일반 공개 라우트 ('/login')</span>
 <span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">_auth.tsx</span><span style="color:#6a9955">           // Pathless 라우트 (URL 변경 없이 레이아웃/가드만 제공)</span>
-<span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">_auth.dashboard.tsx</span><span style="color:#6a9955"> // Flat 라우트 ('/dashboard', _auth의 보호를 받음)</span>
+<span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">_auth.dashboard.tsx</span><span style="color:#6a9955"> // '/dashboard' (_auth의 보호를 받음)</span>
+<span style="color:#d4d4d4">├── </span><span style="color:#9cdcfe">_auth/dashboard.tsx</span><span style="color:#6a9955"> // '/dashboard' (_auth/ 폴더로 만들어도 동일함)</span>
 <span style="color:#d4d4d4">└── </span><span style="color:#9cdcfe">users.$userId.tsx</span><span style="color:#6a9955">   // 동적 파라미터 라우트 ('/users/123')</span>
 `.trim()
 

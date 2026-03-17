@@ -1,6 +1,6 @@
 import ky, { HTTPError } from 'ky'
 import type { Options } from 'ky'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 
 const _apiInstance = ky.create({
   prefixUrl: import.meta.env.VITE_PREFIX_URL || 'http://localhost:8080/api',

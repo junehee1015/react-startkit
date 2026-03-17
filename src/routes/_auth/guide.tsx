@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { GuideRouting } from '@/features/guide/components/GuideRouting'
-import { GuideApi } from '@/features/guide/components/GuideApi'
-import { GuideCommon } from '@/features/guide/components/GuideCommon'
+import { GuideRouting } from '@/features/guide/ui/GuideRouting'
+import { GuideApi } from '@/features/guide/ui/GuideApi'
+import { GuideCommon } from '@/features/guide/ui/GuideCommon'
 
 export const Route = createFileRoute('/_auth/guide')({
   staticData: {
