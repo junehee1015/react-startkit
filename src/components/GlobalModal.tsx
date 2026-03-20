@@ -1,5 +1,5 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { useModalStore } from '@/stores/modalStore'
+import { useModalStore } from '@/stores/useModalStore'
 
 export function GlobalModal() {
   const { isOpen, type, title, description, confirmText, cancelText, onConfirm, onCancel, closeModal } = useModalStore()

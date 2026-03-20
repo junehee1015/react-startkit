@@ -1,4 +1,4 @@
-import { useModalStore } from '@/stores/modalStore'
+import { useModalStore } from '@/stores/useModalStore'
 
 interface ConfirmOptions {
   title: string

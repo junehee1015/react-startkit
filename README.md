@@ -44,7 +44,7 @@ src/
 ├── features/             # 도메인별 비즈니스 로직
 │   └── auth/
 │       ├── api/          # 서버 통신 로직 (index.ts, user.api.ts 등)
-│       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores 통합)
+│       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores - store.ts 통합)
 │       └── ui/           # 도메인 별 컴포넌트
 ├── hooks/
 │   └── useConfirm.ts     # UI 제어용 커스텀 훅
