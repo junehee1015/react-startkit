@@ -1,6 +1,6 @@
 import ky, { HTTPError } from 'ky'
 import type { Options } from 'ky'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { useAuthStore } from '@/features/auth/model'
 
 const _apiInstance = ky.create({
   prefixUrl: import.meta.env.VITE_PREFIX_URL || 'http://localhost:8080/api',
@@ -26,6 +26,33 @@ const redirectLogin = async () => {
   }
 }
 
+const refreshAccessToken = async (): Promise<void> => {
+  try {
+    const { refreshToken, user, setAuthData } = useAuthStore.getState()
+    if (!refreshToken || !user) throw new Error('No refresh token or user')
+
+    // const response = await ky
+    //   .post('refresh', {
+    //     prefixUrl: import.meta.env.VITE_PREFIX_URL || 'http://localhost:8080/api',
+    //     json: { refreshToken },
+    //   })
+    //   .json<{ accessToken: string }>()
+
+    // setAuthData(newAccessToken, newRefreshToken, user)
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const newAccessToken = 'new-access-token-' + Date.now()
+
+    setAuthData(newAccessToken, refreshToken, user)
+  } catch (error) {
+    useAuthStore.getState().clearAuthData()
+    useAuthStore.persist.clearStorage()
+    throw error
+  } finally {
+    refreshPromise = null
+  }
+}
+
 let refreshPromise: Promise<void> | null = null
 
 export const request = async <T = unknown>(url: string, options: Options & { _retry?: boolean } = {}): Promise<T> => {
@@ -36,14 +63,7 @@ export const request = async <T = unknown>(url: string, options: Options & { _re
     const isAuthPath = url.includes('/login') || url.includes('/refresh')
 
     if (error.response?.status === 401 && !options._retry && !isAuthPath) {
-      if (!refreshPromise) {
-        refreshPromise = useAuthStore
-          .getState()
-          .refreshAccessToken()
-          .finally(() => {
-            refreshPromise = null
-          })
-      }
+      if (!refreshPromise) refreshPromise = refreshAccessToken()
 
       try {
         await refreshPromise
@@ -57,7 +77,8 @@ export const request = async <T = unknown>(url: string, options: Options & { _re
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError)
 
-        useAuthStore.getState().logout()
+        useAuthStore.getState().clearAuthData()
+        useAuthStore.persist.clearStorage()
 
         redirectLogin()
 

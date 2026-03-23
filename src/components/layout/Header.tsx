@@ -2,14 +2,15 @@ import { Fragment } from 'react'
 import { Link, useMatches, useNavigate } from '@tanstack/react-router'
 import { Home, ChevronRight, User, Settings, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/useAuthStore'
-import { useConfirm } from '@/hooks/useConfirm'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useAuthStore, useLogout } from '@/features/auth/model'
 
 export function Header() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const user = useAuthStore((state) => state.user)
+  const { logout } = useLogout()
   const { openConfirm } = useConfirm()
 
   const matches = useMatches()
@@ -26,8 +27,8 @@ export function Header() {
       title: '로그아웃 하시겠습니까?',
       cancelText: '취소',
       confirmText: '확인',
-      onConfirm: () => {
-        logout()
+      onConfirm: async () => {
+        await logout()
         navigate({ to: '/login', replace: true })
         toast.error('로그아웃 되었습니다.')
       },
@@ -37,7 +38,7 @@ export function Header() {
   const userInitials = user?.name
     ? user.name
         .split(' ')
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join('')
         .substring(0, 2)
         .toUpperCase()

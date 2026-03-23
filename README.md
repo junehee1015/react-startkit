@@ -44,7 +44,7 @@ src/
 ├── features/             # 도메인별 비즈니스 로직
 │   └── auth/
 │       ├── api/          # 서버 통신 로직 (index.ts, user.api.ts 등)
-│       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores - store.ts 통합)
+│       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores 통합)
 │       └── ui/           # 도메인 별 컴포넌트
 ├── hooks/
 │   └── useConfirm.ts     # UI 제어용 커스텀 훅
@@ -53,7 +53,7 @@ src/
 │   ├── query-client.ts   # 전역 TanStack Query 설정 (전역 성공, 에러 처리 등)
 │   └── utils.ts          # Tailwind 클래스 병합 함수 등
 ├── routes/               # TanStack Router 기반 파일 라우팅 폴더 (Flat Routes)
-├── stores/               # Zustand 전역 스토어 (authStore.ts...)
+├── stores/               # Zustand 전역 스토어 (useModalStore.ts...)
 └── types/                # 전역 TypeScript 인터페이스 및 Zod 스키마
 ```
 
@@ -97,7 +97,7 @@ VITE_APP_TITLE=React Startkit
 
 데이터 흐름을 명확히 하고 컴포넌트를 순수하게 유지하기 위해 4단계 구조를 제안합니다. 실무 상황에 맞춰 명령형(Imperative) 방식과 선언적(Declarative) 방식을 선택하여 사용할 수 있습니다.
 
-**Step 1: API 통신 정의 (`src/api/*.ts`)**
+**Step 1: API 통신 정의 (`src/features/[도메인]/api/index.ts`)**
 오직 네트워크 요청만 담당합니다. `ky` 래퍼 인스턴스를 활용합니다.
 
 ```ts
@@ -119,13 +119,13 @@ export const createUser = async (body: Partial<User>) => {
 }
 ```
 
-**Step 2: TanStack Query 코로케이션 및 에러 처리 (`src/hooks/queries/*.ts`)**
+**Step 2: TanStack Query 코로케이션 및 에러 처리 (`src/features/[도메인]/hooks/*.ts`)**
 **Query Key Factory Pattern**을 적용하여 키를 중앙 관리하고, 비즈니스 로직(useQuery)을 함께(Co-location) 작성합니다.
 
 ```ts
 import { useQuery, useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { fetchUsers, createUser } from '@/api/users'
+import { fetchUsers, createUser } from '@/features/user/api'
 
 // Key Factory Pattern
 export const userKeys = {
@@ -146,7 +146,7 @@ export const useUsersSuspense = (page: number) => {
   return useSuspenseQuery({
     queryKey: userKeys.list(page),
     queryFn: () => fetchUsers(page),
-    // 💡 select: 원본 캐시는 유지하면서 컴포넌트 렌더링용 데이터를 가공합니다.
+    // select: 원본 캐시는 유지하면서 컴포넌트 렌더링용 데이터를 가공합니다.
     select: (users) =>
       users.map((user) => ({
         ...user,
@@ -174,7 +174,7 @@ export const useCreateUser = () => {
 사이드바의 작은 위젯처럼 "에러가 나도 앱 전체나 메인 화면이 멈추면 안 되는 가벼운 UI"에 사용합니다. 컴포넌트 내부에서 isPending과 isError를 직접 체크하여 조용히 처리합니다.
 
 ```tsx
-import { useUsers, useCreateUser } from '@/hooks/queries/useUsers'
+import { useUsers, useCreateUser } from '@/features/user/model'
 
 export function UserWidget() {
   // ErrorBoundary가 없으므로 isPending, isError를 사용해서 분기 처리해야 합니다.
@@ -215,12 +215,12 @@ export function UserWidget() {
 
 ```tsx
 import { Suspense } from 'react'
-import { QueryErrorBoundary } from '@/components/common/QueryErrorBoundary'
-import { useUsersSuspense } from '@/hooks/queries/useUsers'
+import { QueryErrorBoundary } from '@/components/QueryErrorBoundary'
+import { useUsersSuspense } from '@/features/user/model'
 
 // 1. 하위 컴포넌트: 비즈니스 로직(데이터)과 UI 렌더링에만 100% 집중합니다.
 function DeclarativeUserList() {
-  // 🚨 에러나 로딩을 체크하는 코드가 없습니다! 데이터가 무조건 있다고 보장됩니다.
+  // 에러나 로딩을 체크하는 코드가 없습니다! 데이터가 무조건 있다고 보장됩니다.
   const { data: users } = useUsersSuspense(1)
 
   return (
@@ -228,7 +228,7 @@ function DeclarativeUserList() {
   )
 }
 
-// 💡 (선택) 특정 페이지 전용 커스텀 에러 화면이 필요할 때 주입할 컴포넌트
+// (선택) 특정 페이지 전용 커스텀 에러 화면이 필요할 때 주입할 컴포넌트
 // import { FallbackProps } from 'react-error-boundary'
 // const CustomError = ({ error, resetErrorBoundary }: FallbackProps) => (
 //   <div className="p-4 bg-red-900 text-white">
@@ -241,7 +241,7 @@ function DeclarativeUserList() {
 export function UsersPage() {
   return (
     {/* 가장 바깥에서 에러를 캐치하고 '다시 시도(Reset)' 버튼을 제공합니다 */}
-    {/* 💡 커스텀 에러 사용 시: <QueryErrorBoundary FallbackComponent={CustomError}> */}
+    {/* 커스텀 에러 사용 시: <QueryErrorBoundary FallbackComponent={CustomError}> */}
     <QueryErrorBoundary>
       {/* 데이터를 불러오는 동안 fallback(스켈레톤 UI)을 보여줍니다 */}
       <Suspense fallback={<div className="animate-pulse">페이지 로딩 중...</div>}>
@@ -292,10 +292,10 @@ import { Link } from '@tanstack/react-router'
 
 | Type                  | Case       | Example                            |
 | :-------------------- | :--------- | :--------------------------------- |
-| **Component File**    | PascalCase | `Button.tsx`, `Header.tsx`         |
-| **Route File**        | Flat Case  | `_auth.dashboard.tsx`, `login.tsx` |
+| **Component**         | PascalCase | `Button.tsx`, `Header.tsx`         |
+| **Route**             | Flat Case  | `_auth.dashboard.tsx`, `login.tsx` |
 | **Custom Hook**       | camelCase  | `useMobile.ts`, `useConfirm.ts`    |
-| **API Module**        | kebab-case | `users.api.ts`, `auth.api.ts`      |
+| **API Module**        | Flat case  | `index.ts`, `auth.api.ts`          |
 | **Variable/Function** | camelCase  | `handleSubmit`, `fetchData`        |
 | **Interface/Type**    | PascalCase | `User`, `LoginPayload`             |
 
