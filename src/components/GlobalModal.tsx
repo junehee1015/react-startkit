@@ -19,7 +19,7 @@ export function GlobalModal() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
+          <AlertDialogDescription className={description ? '' : 'sr-only'}>{description ? '' : '해당 알림은 설명이 존재하지 않습니다.'}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           {type === 'confirm' && <AlertDialogCancel onClick={handleCancel}>{cancelText}</AlertDialogCancel>}

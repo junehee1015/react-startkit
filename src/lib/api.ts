@@ -26,7 +26,7 @@ const redirectLogin = async () => {
   }
 }
 
-const refreshAccessToken = async (): Promise<void> => {
+export const refreshAccessToken = async (): Promise<void> => {
   try {
     const { refreshToken, user, setAuthData } = useAuthStore.getState()
     if (!refreshToken || !user) throw new Error('No refresh token or user')
@@ -40,7 +40,7 @@ const refreshAccessToken = async (): Promise<void> => {
 
     // setAuthData(newAccessToken, newRefreshToken, user)
 
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 3000))
     const newAccessToken = 'new-access-token-' + Date.now()
 
     setAuthData(newAccessToken, refreshToken, user)
@@ -55,7 +55,7 @@ const refreshAccessToken = async (): Promise<void> => {
 
 let refreshPromise: Promise<void> | null = null
 
-export const request = async <T = unknown>(url: string, options: Options & { _retry?: boolean } = {}): Promise<T> => {
+const _request = async <T = unknown>(url: string, options: Options & { _retry?: boolean } = {}): Promise<T> => {
   try {
     return await _apiInstance(url, options).json<T>()
   } catch (e) {
@@ -89,3 +89,11 @@ export const request = async <T = unknown>(url: string, options: Options & { _re
     throw error
   }
 }
+
+export const request = Object.assign(_request, {
+  get: <T = unknown>(url: string, options?: Options) => _request<T>(url, { ...options, method: 'get' }),
+  post: <T = unknown>(url: string, options?: Options) => _request<T>(url, { ...options, method: 'post' }),
+  put: <T = unknown>(url: string, options?: Options) => _request<T>(url, { ...options, method: 'put' }),
+  delete: <T = unknown>(url: string, options?: Options) => _request<T>(url, { ...options, method: 'delete' }),
+  patch: <T = unknown>(url: string, options?: Options) => _request<T>(url, { ...options, method: 'patch' }),
+})
