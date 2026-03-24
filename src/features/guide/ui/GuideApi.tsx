@@ -1,5 +1,3 @@
-// src/components/guide/GuideApi.tsx
-
 export function GuideApi() {
   return (
     <div className="max-w-5xl space-y-12 pb-32">
@@ -19,7 +17,7 @@ export function GuideApi() {
           <h3 className="text-xl font-bold text-gray-800">API 통신 정의 (api/ 디렉토리)</h3>
         </div>
         <p className="text-sm text-gray-600">이 계층은 오직 네트워크 요청만 담당합니다. ky 인스턴스를 활용하여 순수 함수로 작성합니다.</p>
-        <CodeBlock filename="src/api/users.ts" htmlCode={step1Code} />
+        <CodeBlock filename="src/features/user/api/index.ts" htmlCode={step1Code} />
       </section>
 
       {/* --- STEP 2 --- */}
@@ -31,7 +29,7 @@ export function GuideApi() {
         <p className="text-sm text-gray-600">
           캐시 키(Key Factory)와 비즈니스 로직을 <strong>함께(Co-location)</strong> 모아둡니다.
         </p>
-        <CodeBlock filename="src/hooks/queries/useUsers.ts" htmlCode={step2Code} />
+        <CodeBlock filename="src/features/user/model/hooks/useUsers.ts" htmlCode={step2Code} />
       </section>
 
       {/* --- STEP 3 --- */}
@@ -47,7 +45,7 @@ export function GuideApi() {
             처리합니다.
           </p>
         </div>
-        <CodeBlock filename="src/components/widgets/UserWidget.tsx" htmlCode={step3Code} />
+        <CodeBlock filename="src/features/user/ui/UserWidget.tsx" htmlCode={step3Code} />
       </section>
 
       {/* --- STEP 4 --- */}
@@ -109,7 +107,7 @@ const step1Code = `
 const step2Code = `
 <span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">useQuery</span>, <span style="color:#9cdcfe">useSuspenseQuery</span>, <span style="color:#9cdcfe">useMutation</span>, <span style="color:#9cdcfe">useQueryClient</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@tanstack/react-query'</span>
 <span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">toast</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'sonner'</span>
-<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">fetchUsers</span>, <span style="color:#9cdcfe">createUser</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/api/users'</span>
+<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">fetchUsers</span>, <span style="color:#9cdcfe">createUser</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/features/user/api'</span>
 
 <span style="color:#6a9955">// Key Factory Pattern</span>
 <span style="color:#c586c0">export</span> <span style="color:#569cd6">const</span> <span style="color:#4fc1ff">userKeys</span> = {
@@ -118,7 +116,7 @@ const step2Code = `
 }
 
 <span style="color:#6a9955">// 1. 일반 Query (ErrorBoundary 미사용 시 / 옵셔널 체이닝 필요)</span>
-<span style="color:#c586c0">export</span> <span style="color:#569cd6">const</span> <span style="color:#dcdcaa">useUsers</span> = (<span style="color:#9cdcfe">page</span>: <span style="color:#4ec9b0">number</span>) <span style="color:#569cd6">=&gt;</span> {
+<span style="color:#c586c0">export</span> <span style="color:#569cd6">const</span> <span style="color:#dcdcaa">useUser</span> = (<span style="color:#9cdcfe">page</span>: <span style="color:#4ec9b0">number</span>) <span style="color:#569cd6">=&gt;</span> {
   <span style="color:#c586c0">return</span> <span style="color:#dcdcaa">useQuery</span>({
     <span style="color:#9cdcfe">queryKey</span>: <span style="color:#9cdcfe">userKeys</span>.<span style="color:#dcdcaa">list</span>(<span style="color:#9cdcfe">page</span>),
     <span style="color:#dcdcaa">queryFn</span>: () <span style="color:#569cd6">=&gt;</span> <span style="color:#dcdcaa">fetchUsers</span>(<span style="color:#9cdcfe">page</span>),
@@ -153,12 +151,12 @@ const step2Code = `
 }`.trim()
 
 const step3Code = `
-<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">useUsers</span>, <span style="color:#9cdcfe">useCreateUser</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/hooks/queries/useUsers'</span>
+<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">useUser</span>, <span style="color:#9cdcfe">useCreateUser</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/features/user/model'</span>
 
 <span style="color:#c586c0">export</span> <span style="color:#569cd6">function</span> <span style="color:#dcdcaa">UserWidget</span>() {
   <span style="color:#6a9955">// ErrorBoundary가 없으므로 isPending, isError를 사용해서 분기 처리해야 합니다.</span>
-  <span style="color:#569cd6">const</span> { <span style="color:#9cdcfe">data</span>: <span style="color:#9cdcfe">users</span>, <span style="color:#9cdcfe">isPending</span>, <span style="color:#9cdcfe">isError</span>, <span style="color:#9cdcfe">refetch</span> } = <span style="color:#dcdcaa">useUsers</span>(<span style="color:#b5cea8">1</span>)
-  <span style="color:#569cd6">const</span> <span style="color:#9cdcfe">mutation</span> = <span style="color:#dcdcaa">useCreateUser</span>()
+  <span style="color:#569cd6">const</span> { <span style="color:#9cdcfe">data</span>: <span style="color:#9cdcfe">users</span>, <span style="color:#9cdcfe">isPending</span>, <span style="color:#9cdcfe">isError</span>, <span style="color:#9cdcfe">refetch</span> } = <span style="color:#dcdcaa">useUser</span>(<span style="color:#b5cea8">1</span>)
+  <span style="color:#569cd6">const</span> { <span style="color:#9cdcfe">mutate</span>: <span style="color:#9cdcfe">createUser</span>, <span style="color:#9cdcfe">isPending</span> } = <span style="color:#dcdcaa">useCreateUser</span>()
 
   <span style="color:#6a9955">// 1. 에러 체크 UI</span>
   <span style="color:#c586c0">if</span> (<span style="color:#9cdcfe">isError</span>) {
@@ -178,10 +176,10 @@ const step3Code = `
       
       <span style="color:#6a9955">{/* Mutation 사용 예시 */}</span>
       &lt;<span style="color:#569cd6">button</span> 
-        <span style="color:#9cdcfe">onClick</span>={<span style="color:#dcdcaa">()</span> <span style="color:#569cd6">=&gt;</span> <span style="color:#9cdcfe">mutation</span>.<span style="color:#dcdcaa">mutate</span>({ <span style="color:#9cdcfe">name</span>: <span style="color:#ce9178">'New User'</span> })} 
-        <span style="color:#9cdcfe">disabled</span>={<span style="color:#9cdcfe">mutation</span>.<span style="color:#9cdcfe">isPending</span>}
+        <span style="color:#9cdcfe">onClick</span>={<span style="color:#dcdcaa">()</span> <span style="color:#569cd6">=&gt;</span> <span style="color:#dcdcaa">createUser</span>({ <span style="color:#9cdcfe">name</span>: <span style="color:#ce9178">'New User'</span> })} 
+        <span style="color:#9cdcfe">disabled</span>={<span style="color:#9cdcfe">isPending</span>}
       &gt;
-        {<span style="color:#9cdcfe">mutation</span>.<span style="color:#9cdcfe">isPending</span> ? <span style="color:#ce9178">'생성 중...'</span> : <span style="color:#ce9178">'새 유저 추가'</span>}
+        {<span style="color:#9cdcfe">isPending</span> ? <span style="color:#ce9178">'생성 중...'</span> : <span style="color:#ce9178">'새 유저 추가'</span>}
       &lt;/<span style="color:#569cd6">button</span>&gt;
     &lt;/<span style="color:#569cd6">div</span>&gt;
   )
@@ -190,7 +188,7 @@ const step3Code = `
 const step4Code = `
 <span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">Suspense</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'react'</span>
 <span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">QueryErrorBoundary</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/components/common/QueryErrorBoundary'</span>
-<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">useUsersSuspense</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/hooks/queries/useUsers'</span>
+<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">useUsersSuspense</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/features/user/model'</span>
 
 <span style="color:#6a9955">// 1. 하위 컴포넌트: 비즈니스 로직(데이터)과 UI 렌더링에만 100% 집중합니다.</span>
 <span style="color:#c586c0">function</span> <span style="color:#dcdcaa">DeclarativeUserList</span>() {

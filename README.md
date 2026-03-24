@@ -42,10 +42,12 @@ src/
 │   ├── layout/           # 레이아웃 구성 요소 (Header.tsx, AppSidebar.tsx...)
 │   └── ui/               # Shadcn UI 컴포넌트 모음
 ├── features/             # 도메인별 비즈니스 로직
-│   └── auth/
+│   └── auth/             # 인증 관련 (로그인 등)
 │       ├── api/          # 서버 통신 로직 (index.ts, user.api.ts 등)
 │       ├── model/        # 비즈니스 로직 및 상태 관리 (hooks, stores 통합)
-│       └── ui/           # 도메인 별 컴포넌트
+│       │   ├── hooks/    # 도메인 커스텀 Hook
+│       │   └── store.ts  # 도메인 Zustand 스토어
+│       └── ui/           # 도메인 컴포넌트
 ├── hooks/
 │   └── useConfirm.ts     # UI 제어용 커스텀 훅
 ├── lib/                  # 전역 유틸리티 및 설정

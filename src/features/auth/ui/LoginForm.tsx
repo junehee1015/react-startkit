@@ -21,14 +21,14 @@ type LoginValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const navigate = useNavigate()
-  const { login } = useLogin()
+  const { mutate: login, isPending } = useLogin()
 
   const {
     register,
     control,
     handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -47,20 +47,23 @@ export function LoginForm() {
   }, [setValue])
 
   const onSubmit: SubmitHandler<LoginValues> = async (values) => {
-    try {
-      await login(values)
+    const { rememberMe, ...loginPayload } = values
 
-      if (values.rememberMe) {
-        localStorage.setItem('saved_email', values.email)
-      } else {
-        localStorage.removeItem('saved_email')
-      }
+    login(loginPayload, {
+      onSuccess: () => {
+        if (rememberMe) {
+          localStorage.setItem('saved_email', values.email)
+        } else {
+          localStorage.removeItem('saved_email')
+        }
 
-      toast.success('로그인되었습니다.')
-      navigate({ to: '/', replace: true })
-    } catch {
-      toast.error('로그인에 실패했습니다.')
-    }
+        toast.success('로그인되었습니다.')
+        navigate({ to: '/', replace: true })
+      },
+      onError: () => {
+        toast.error('로그인에 실패했습니다.')
+      },
+    })
   }
 
   return (
@@ -100,8 +103,8 @@ export function LoginForm() {
         </Link>
       </div>
 
-      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-        {isSubmitting ? '로그인 중...' : '로그인'}
+      <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+        {isPending ? '로그인 중...' : '로그인'}
       </Button>
     </form>
   )
