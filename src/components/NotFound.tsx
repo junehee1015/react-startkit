@@ -1,7 +1,14 @@
-import { Link } from '@tanstack/react-router'
+import { Link, Navigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/features/auth/model'
 
 export function NotFound() {
+  const accessToken = useAuthStore((state) => state.accessToken)
+
+  if (!accessToken) {
+    return <Navigate to="/login" replace />
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
       <h1 className="text-4xl font-bold text-gray-900">404</h1>

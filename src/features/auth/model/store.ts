@@ -13,27 +13,25 @@ export interface LoginPayload {
 }
 
 interface AuthState {
-  user: User | null
+  user?: User | null
   accessToken: string | null
-  refreshToken: string | null
-  setAuthData: (accessToken: string, refreshToken: string, user: User) => void // 백엔드에서 refreshToken을 Http Only로 사용한다면 제거
+  setAuthData: (accessToken: string, user?: User) => void
   clearAuthData: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
-      refreshToken: null, // 백엔드에서 refreshToken을 Http Only로 사용한다면 제거
 
-      setAuthData: (accessToken, refreshToken, user) => set({ accessToken, refreshToken, user }),
+      setAuthData: (accessToken, user = get().user) => set({ accessToken, user }),
 
-      clearAuthData: () => set({ user: null, accessToken: null, refreshToken: null }),
+      clearAuthData: () => set({ user: null, accessToken: null }),
     }),
     {
       name: 'auth',
-      partialize: (state) => ({ user: state.user, refreshToken: state.refreshToken }), // 백엔드에서 refreshToken을 Http Only로 사용한다면 제거
+      partialize: (state) => ({ user: state.user }),
     },
   ),
 )

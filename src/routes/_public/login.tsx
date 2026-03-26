@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { LoginForm } from '@/features/auth/ui/LoginForm'
 
@@ -6,6 +8,11 @@ export const Route = createFileRoute('/_public/login')({
 })
 
 function LoginPage() {
+  useEffect(() => {
+    if (import.meta.env.VITE_ENABLE_MSW !== 'true') toast.warning('Mock 서버가 아닙니다.')
+    else toast.success('Mock 서버입니다.')
+  }, [])
+
   return (
     <div className="w-full max-w-md space-y-8 rounded-lg border border-gray-100 bg-white p-8 shadow-lg">
       <div className="text-center">
