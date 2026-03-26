@@ -54,6 +54,8 @@ src/
 │   ├── api.ts            # ky 인스턴스 (Interceptor & Token Logic)
 │   ├── query-client.ts   # 전역 TanStack Query 설정 (전역 성공, 에러 처리 등)
 │   └── utils.ts          # Tailwind 클래스 병합 함수 등
+├── mocks/                # MSW (목업 BE)
+│   └── handlers          # 목업 BE (auth.ts ...)
 ├── routes/               # TanStack Router 기반 파일 라우팅 폴더 (Flat Routes)
 ├── stores/               # Zustand 전역 스토어 (useModalStore.ts...)
 └── types/                # 전역 TypeScript 인터페이스 및 Zod 스키마
@@ -63,7 +65,7 @@ src/
 
 ## 🚀 Getting Started
 
-### 1. 의존성 설치 (pnpm 권장)
+### 1. 의존성 설치
 
 ```bash
 pnpm install
@@ -75,19 +77,24 @@ pnpm install
 pnpm run dev
 ```
 
-### 3. 빌드 및 프리뷰
+### 3. Mock(MSW) 서버 실행
+
+```bash
+pnpm run dev:mock
+```
+
+### 4. 빌드 및 배포
 
 ```bash
 pnpm run build
-pnpm run preview
 ```
 
-### 4. 환경 변수 설정 (.env)
+### 5. 환경 변수 설정 (.env)
 
 루트 경로에 `.env` 파일을 생성하고 API 주소를 설정하세요.
 
 ```env
-VITE_API_URL=http://localhost:8080/api
+VITE_API_URL=http://localhost:8080
 VITE_APP_TITLE=React Startkit
 ```
 
@@ -103,18 +110,18 @@ VITE_APP_TITLE=React Startkit
 오직 네트워크 요청만 담당합니다. `ky` 래퍼 인스턴스를 활용합니다.
 
 ```ts
-import { request } from '@/lib/api'
+import { api } from '@/lib/api'
 
 // GET 요청
-export const fetchUsers = async (page: number) => {
-  return await request('users', {
+export const fetchUsers = (page: number) => {
+  return api('users', {
     searchParams: { page },
   })
 }
 
 // POST 요청
-export const createUser = async (body: Partial<User>) => {
-  return await request('users', {
+export const createUser = (body: Partial<User>) => {
+  return api('users', {
     method: 'POST',
     json: body,
   })
