@@ -53,7 +53,7 @@ export const logout = () => {
 
 const redirectToLogin = async () => {
   try {
-    const { router } = await import('@/main')
+    const { router } = await import('./router')
     if (router.state.location.pathname !== '/login') router.navigate({ to: '/login', replace: true })
   } catch {
     location.href = '/login'

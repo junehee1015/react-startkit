@@ -53,6 +53,7 @@ src/
 ├── lib/                  # 전역 유틸리티 및 설정
 │   ├── api.ts            # ky 인스턴스 (Interceptor & Token Logic)
 │   ├── query-client.ts   # 전역 TanStack Query 설정 (전역 성공, 에러 처리 등)
+│   ├── router.ts         # TanStack Router 설정
 │   └── utils.ts          # Tailwind 클래스 병합 함수 등
 ├── mocks/                # MSW (목업 BE)
 │   └── handlers          # 목업 BE (auth.ts ...)

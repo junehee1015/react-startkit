@@ -14,9 +14,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  build: {
-    target: 'esnext',
-  },
   server: {
     port: 3000,
     proxy: {
