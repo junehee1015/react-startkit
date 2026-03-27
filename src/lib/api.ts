@@ -1,5 +1,5 @@
 import ky from 'ky'
-import type { HTTPError, Options } from 'ky'
+import type { HTTPError, Options, Input } from 'ky'
 import { useAuthStore } from '@/features/auth/model'
 
 const PREFIX_URL = import.meta.env.VITE_PREFIX_URL || '/api'
@@ -75,12 +75,13 @@ const _apiInstance = ky.create({
   },
 })
 
-const _api = async <T = unknown>(url: string, options: Options): Promise<T> => {
+const _api = async <T = unknown>(request: Input, options: Options): Promise<T> => {
   try {
-    return await _apiInstance(url, options).json<T>()
+    return await _apiInstance(request, options).json<T>()
   } catch (e) {
     const error = e as HTTPError
-    const isAuthPath = url.includes('/login') || url.includes('/refresh')
+    const requestUrl = request instanceof Request ? request.url : request.toString()
+    const isAuthPath = requestUrl.includes('/login') || requestUrl.includes('/refresh')
 
     if (error.response?.status === 401 && !isAuthPath) {
       try {
@@ -94,7 +95,7 @@ const _api = async <T = unknown>(url: string, options: Options): Promise<T> => {
         throw refreshError
       }
 
-      return await _apiInstance(url, options).json<T>()
+      return await _apiInstance(request, options).json<T>()
     }
 
     throw error
@@ -102,9 +103,9 @@ const _api = async <T = unknown>(url: string, options: Options): Promise<T> => {
 }
 
 export const api = Object.assign(_api, {
-  get: <T = unknown>(url: string, options?: Options) => _api<T>(url, { ...options, method: 'get' }),
-  post: <T = unknown>(url: string, options?: Options) => _api<T>(url, { ...options, method: 'post' }),
-  put: <T = unknown>(url: string, options?: Options) => _api<T>(url, { ...options, method: 'put' }),
-  delete: <T = unknown>(url: string, options?: Options) => _api<T>(url, { ...options, method: 'delete' }),
-  patch: <T = unknown>(url: string, options?: Options) => _api<T>(url, { ...options, method: 'patch' }),
+  get: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'get' }),
+  post: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'post' }),
+  put: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'put' }),
+  delete: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'delete' }),
+  patch: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'patch' }),
 })
