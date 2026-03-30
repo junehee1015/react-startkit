@@ -95,7 +95,7 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>내 계정</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => alert('Profile')}>
+              <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 <span>프로필</span>
               </DropdownMenuItem>

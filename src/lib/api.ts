@@ -2,48 +2,21 @@ import ky from 'ky'
 import type { HTTPError, Options, Input } from 'ky'
 import { useAuthStore } from '@/features/auth/model'
 
+export const AUTH_EXPIRED_EVENT = 'auth:expired'
+
 const PREFIX_URL = import.meta.env.VITE_PREFIX_URL || '/api'
 let refreshPromise: Promise<void> | null = null
 let logoutPromise: Promise<void> | null = null
-
-export const refreshAccessToken = () => {
-  if (refreshPromise) return refreshPromise
-
-  refreshPromise = (async () => {
-    const { setAuthData } = useAuthStore.getState()
-
-    try {
-      const response = await ky
-        .post<{ accessToken: string }>(`refresh`, {
-          prefixUrl: PREFIX_URL,
-          credentials: 'include',
-        })
-        .json()
-
-      setAuthData(response.accessToken)
-    } finally {
-      refreshPromise = null
-    }
-  })()
-
-  return refreshPromise
-}
 
 export const logout = () => {
   if (logoutPromise) return logoutPromise
 
   logoutPromise = (async () => {
     try {
-      await ky.post(`logout`, {
-        prefixUrl: PREFIX_URL,
-        credentials: 'include',
-      })
+      await ky.post(`logout`, { prefixUrl: PREFIX_URL, credentials: 'include' })
     } catch (error) {
       console.error('Logout API failed, but forcing local logout', error)
     } finally {
-      useAuthStore.getState().clearAuthData()
-      useAuthStore.persist.clearStorage()
-
       logoutPromise = null
     }
   })()
@@ -51,13 +24,23 @@ export const logout = () => {
   return logoutPromise
 }
 
-const redirectToLogin = async () => {
-  try {
-    const { router } = await import('./router')
-    if (router.state.location.pathname !== '/login') router.navigate({ to: '/login', replace: true })
-  } catch {
-    location.href = '/login'
-  }
+export const refreshAccessToken = () => {
+  if (refreshPromise) return refreshPromise
+
+  refreshPromise = (async () => {
+    try {
+      const response = await ky.post<{ accessToken: string }>(`refresh`, { prefixUrl: PREFIX_URL, credentials: 'include' }).json()
+      useAuthStore.getState().setAuthData(response.accessToken)
+    } catch (error) {
+      await logout()
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT))
+      throw error
+    } finally {
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
 }
 
 const _apiInstance = ky.create({
@@ -75,27 +58,21 @@ const _apiInstance = ky.create({
   },
 })
 
-const _api = async <T = unknown>(request: Input, options: Options): Promise<T> => {
+const _api = async <T = unknown>(request: Input, options?: Options): Promise<T> => {
+  const requestToPerform = request instanceof Request ? request.clone() : request
+
   try {
-    return await _apiInstance(request, options).json<T>()
+    return await _apiInstance(requestToPerform, options).json<T>()
   } catch (e) {
     const error = e as HTTPError
     const requestUrl = request instanceof Request ? request.url : request.toString()
     const isAuthPath = requestUrl.includes('/login') || requestUrl.includes('/refresh')
 
     if (error.response?.status === 401 && !isAuthPath) {
-      try {
-        await refreshAccessToken()
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError)
+      await refreshAccessToken()
 
-        await logout()
-        await redirectToLogin()
-
-        throw refreshError
-      }
-
-      return await _apiInstance(request, options).json<T>()
+      const retryRequest = request instanceof Request ? request.clone() : request
+      return await _apiInstance(retryRequest, options).json<T>()
     }
 
     throw error
