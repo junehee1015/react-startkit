@@ -1,23 +1,11 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { RouterProvider } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/query-client'
 import './index.css'
 import { Toaster } from 'sonner'
-import { routeTree } from './routeTree.gen'
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
-
-  interface StaticDataRouteOption {
-    breadcrumb?: string
-  }
-}
-
-export const router = createRouter({ routeTree, context: { queryClient } })
+import { router } from './lib/router'
 
 const enableMocking = async () => {
   if (import.meta.env.VITE_ENABLE_MSW !== 'true') return
