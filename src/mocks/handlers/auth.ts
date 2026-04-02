@@ -6,9 +6,9 @@ export const authHandlers = [
   http.post(`${BASE_URL}/login`, async ({ request }) => {
     const { email, password } = (await request.json()) as { email: string; password: string }
 
-    if (email !== 'admin@example.com' && password !== '1234') return new HttpResponse(null, { status: 401 })
-
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    if (email !== 'admin@example.com' || password !== '1234') return new HttpResponse(null, { status: 401 })
 
     return HttpResponse.json(
       {

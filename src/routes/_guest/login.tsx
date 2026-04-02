@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { LoginForm } from '@/features/auth/ui/LoginForm'
 
-export const Route = createFileRoute('/_public/login')({
+export const Route = createFileRoute('/_guest/login')({
   component: LoginPage,
 })
 
@@ -21,7 +21,6 @@ function LoginPage() {
       <LoginForm />
       <p className="text-center text-sm text-gray-600">
         계정이 없으신가요?
-        {/* @ts-expect-error: Route not generated yet */}
         <Link to="/signup" className="ml-1 font-medium text-blue-600 hover:text-blue-500">
           회원가입
         </Link>

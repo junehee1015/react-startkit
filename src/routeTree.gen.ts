@@ -10,13 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
+import { Route as GuestRouteImport } from './routes/_guest'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicPublicRouteImport } from './routes/_public/public'
+import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as AuthGuideRouteImport } from './routes/_auth/guide'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestRoute = GuestRouteImport.update({
+  id: '/_guest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -28,10 +34,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicLoginRoute = PublicLoginRouteImport.update({
+const PublicPublicRoute = PublicPublicRouteImport.update({
+  id: '/public',
+  path: '/public',
+  getParentRoute: () => PublicRoute,
+} as any)
+const GuestLoginRoute = GuestLoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => PublicRoute,
+  getParentRoute: () => GuestRoute,
 } as any)
 const AuthGuideRoute = AuthGuideRouteImport.update({
   id: '/guide',
@@ -42,38 +53,45 @@ const AuthGuideRoute = AuthGuideRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/guide': typeof AuthGuideRoute
-  '/login': typeof PublicLoginRoute
+  '/login': typeof GuestLoginRoute
+  '/public': typeof PublicPublicRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/guide': typeof AuthGuideRoute
-  '/login': typeof PublicLoginRoute
+  '/login': typeof GuestLoginRoute
+  '/public': typeof PublicPublicRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
+  '/_guest': typeof GuestRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_auth/guide': typeof AuthGuideRoute
-  '/_public/login': typeof PublicLoginRoute
+  '/_guest/login': typeof GuestLoginRoute
+  '/_public/public': typeof PublicPublicRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/guide' | '/login'
+  fullPaths: '/' | '/guide' | '/login' | '/public'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/guide' | '/login'
+  to: '/' | '/guide' | '/login' | '/public'
   id:
     | '__root__'
     | '/'
     | '/_auth'
+    | '/_guest'
     | '/_public'
     | '/_auth/guide'
-    | '/_public/login'
+    | '/_guest/login'
+    | '/_public/public'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
+  GuestRoute: typeof GuestRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
 }
 
@@ -84,6 +102,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_guest': {
+      id: '/_guest'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -100,12 +125,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_public/login': {
-      id: '/_public/login'
+    '/_public/public': {
+      id: '/_public/public'
+      path: '/public'
+      fullPath: '/public'
+      preLoaderRoute: typeof PublicPublicRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_guest/login': {
+      id: '/_guest/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof PublicLoginRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof GuestLoginRouteImport
+      parentRoute: typeof GuestRoute
     }
     '/_auth/guide': {
       id: '/_auth/guide'
@@ -127,12 +159,22 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface GuestRouteChildren {
+  GuestLoginRoute: typeof GuestLoginRoute
+}
+
+const GuestRouteChildren: GuestRouteChildren = {
+  GuestLoginRoute: GuestLoginRoute,
+}
+
+const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
+
 interface PublicRouteChildren {
-  PublicLoginRoute: typeof PublicLoginRoute
+  PublicPublicRoute: typeof PublicPublicRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
-  PublicLoginRoute: PublicLoginRoute,
+  PublicPublicRoute: PublicPublicRoute,
 }
 
 const PublicRouteWithChildren =
@@ -141,6 +183,7 @@ const PublicRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
+  GuestRoute: GuestRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
 }
 export const routeTree = rootRouteImport
