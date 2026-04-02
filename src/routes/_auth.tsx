@@ -4,8 +4,9 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar as Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { refreshAccessToken, logout } from '@/lib/api'
+import { refreshAccessToken } from '@/lib/api'
 import { NotFound as notFoundComponent } from '@/components/NotFound'
+import { queryClient } from '@/lib/query-client'
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: async () => {
@@ -13,7 +14,9 @@ export const Route = createFileRoute('/_auth')({
       try {
         await refreshAccessToken()
       } catch {
-        await logout()
+        useAuthStore.getState().clearAuthData()
+        useAuthStore.persist.clearStorage()
+        queryClient.clear()
       }
     }
 
