@@ -36,7 +36,7 @@ export const logout = () => {
 
   logoutPromise = (async () => {
     try {
-      await ky.post(`logout`, { prefixUrl: PREFIX_URL, credentials: 'include' })
+      await _apiInstance.post(`logout`, { credentials: 'include' })
     } catch (error) {
       console.error('Logout API failed', error)
     } finally {
@@ -76,7 +76,7 @@ const _api = async <T = unknown>(request: Input, options?: Options): Promise<T> 
   } catch (e) {
     const error = e as HTTPError
     const requestUrl = request instanceof Request ? request.url : request.toString()
-    const isAuthPath = requestUrl.includes('/login') || requestUrl.includes('/refresh')
+    const isAuthPath = requestUrl.includes('/login') || requestUrl.includes('/logout') || requestUrl.includes('/refresh')
 
     if (error.response?.status === 401 && !isAuthPath) {
       try {
