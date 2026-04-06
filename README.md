@@ -129,7 +129,7 @@ export const createUser = (body: Partial<User>) => {
 }
 ```
 
-**Step 2: TanStack Query 코로케이션 및 에러 처리 (`src/features/[도메인]/hooks/*.ts`)**
+**Step 2: TanStack Query 코로케이션 및 에러 처리 (`src/features/[도메인]/model/hooks/*.ts`)**
 **Query Key Factory Pattern**을 적용하여 키를 중앙 관리하고, 비즈니스 로직(useQuery)을 함께(Co-location) 작성합니다.
 
 ```ts
