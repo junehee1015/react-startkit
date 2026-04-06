@@ -87,18 +87,18 @@ function CodeBlock({ filename, htmlCode }: { filename: string; htmlCode: string 
 // ----------------------------------------------------------------------------
 
 const step1Code = `
-<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">request</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/lib/api'</span>
+<span style="color:#c586c0">import</span> { <span style="color:#9cdcfe">api</span> } <span style="color:#c586c0">from</span> <span style="color:#ce9178">'@/lib/api'</span>
 
 <span style="color:#6a9955">// GET 요청</span>
 <span style="color:#c586c0">export</span> <span style="color:#569cd6">const</span> <span style="color:#dcdcaa">fetchUsers</span> = <span style="color:#569cd6">async</span> (<span style="color:#9cdcfe">page</span>: <span style="color:#4ec9b0">number</span>) <span style="color:#569cd6">=&gt;</span> {
-  <span style="color:#c586c0">return</span> <span style="color:#c586c0">await</span> <span style="color:#dcdcaa">request</span>(<span style="color:#ce9178">'users'</span>, {
+  <span style="color:#c586c0">return</span> <span style="color:#c586c0">await</span> <span style="color:#dcdcaa">api</span>(<span style="color:#ce9178">'users'</span>, {
     <span style="color:#9cdcfe">searchParams</span>: { <span style="color:#9cdcfe">page</span> }
   })
 }
 
 <span style="color:#6a9955">// POST 요청</span>
 <span style="color:#c586c0">export</span> <span style="color:#569cd6">const</span> <span style="color:#dcdcaa">createUser</span> = <span style="color:#569cd6">async</span> (<span style="color:#9cdcfe">body</span>: <span style="color:#4ec9b0">Partial</span>&lt;<span style="color:#4ec9b0">User</span>&gt;) <span style="color:#569cd6">=&gt;</span> {
-  <span style="color:#c586c0">return</span> <span style="color:#c586c0">await</span> <span style="color:#dcdcaa">request</span>(<span style="color:#ce9178">'users'</span>, {
+  <span style="color:#c586c0">return</span> <span style="color:#c586c0">await</span> <span style="color:#dcdcaa">api</span>(<span style="color:#ce9178">'users'</span>, {
     <span style="color:#9cdcfe">method</span>: <span style="color:#ce9178">'POST'</span>,
     <span style="color:#9cdcfe">json</span>: <span style="color:#9cdcfe">body</span>,
   })
