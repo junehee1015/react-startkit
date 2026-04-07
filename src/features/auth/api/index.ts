@@ -10,6 +10,6 @@ interface LoginResponse {
 
 const prefixUrl = import.meta.env.VITE_PREFIX_URL || '/api'
 
-export const loginApi = (json: LoginPayload) => ky.post('login', { prefixUrl, json }).json<LoginResponse>()
+export const loginApi = (json: LoginPayload) => ky.post('login', { prefix: prefixUrl, json }).json<LoginResponse>()
 
 export const logoutApi = () => api.post<void>('logout', { credentials: 'include' })

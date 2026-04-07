@@ -12,7 +12,7 @@ export const refreshAccessToken = () => {
 
   refreshPromise = (async () => {
     try {
-      const response = await ky.post<{ accessToken: string }>(`refresh`, { prefixUrl: PREFIX_URL, credentials: 'include' }).json()
+      const response = await ky.post<{ accessToken: string }>(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json()
       useAuthStore.getState().setAuthData(response.accessToken)
     } finally {
       refreshPromise = null
@@ -54,11 +54,11 @@ export const logout = () => {
 }
 
 const _apiInstance = ky.create({
-  prefixUrl: PREFIX_URL,
+  prefix: PREFIX_URL,
   retry: 0,
   hooks: {
     beforeRequest: [
-      (request) => {
+      ({ request }) => {
         const { accessToken } = useAuthStore.getState()
         if (accessToken) {
           request.headers.set('Authorization', `Bearer ${accessToken}`)
