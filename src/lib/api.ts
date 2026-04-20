@@ -69,10 +69,11 @@ const _apiInstance = ky.create({
 })
 
 const _api = async <T = unknown>(request: Input, options?: Options): Promise<T> => {
-  const requestToPerform = request instanceof Request ? request.clone() : request
+  const getCloneRequest = () => (request instanceof Request ? request.clone() : request)
+  const getCloneOptions = () => (options ? { ...options } : undefined)
 
   try {
-    return await _apiInstance(requestToPerform, options).json<T>()
+    return await _apiInstance(getCloneRequest(), getCloneOptions()).json<T>()
   } catch (e) {
     const error = e as HTTPError
     const requestUrl = request instanceof Request ? request.url : request.toString()
@@ -87,8 +88,7 @@ const _api = async <T = unknown>(request: Input, options?: Options): Promise<T> 
         throw refreshError
       }
 
-      const retryRequest = request instanceof Request ? request.clone() : request
-      return await _apiInstance(retryRequest, options).json<T>()
+      return await _apiInstance(getCloneRequest(), getCloneOptions()).json<T>()
     }
 
     throw error
