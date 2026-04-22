@@ -1,26 +1,15 @@
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
-import { useAuthStore } from '@/features/auth/model'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar as Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { refreshAccessToken } from '@/lib/api'
 import { NotFound as notFoundComponent } from '@/components/NotFound'
-import { queryClient } from '@/lib/query-client'
 
 export const Route = createFileRoute('/_auth')({
-  beforeLoad: async () => {
-    if (!useAuthStore.getState().accessToken && useAuthStore.getState().user) {
-      try {
-        await refreshAccessToken()
-      } catch {
-        useAuthStore.getState().clearAuthData()
-        useAuthStore.persist.clearStorage()
-        queryClient.clear()
-      }
-    }
+  beforeLoad: async ({ context }) => {
+    const { accessToken, user } = context.useAuthStore.getState()
 
-    if (!useAuthStore.getState().accessToken || !useAuthStore.getState().user) {
+    if (!accessToken || !user) {
       throw redirect({ to: '/login', replace: true })
     }
   },

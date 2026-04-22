@@ -1,19 +1,21 @@
 import ky from 'ky'
-import type { HTTPError, Options, Input } from 'ky'
 import { useAuthStore } from '@/features/auth/model'
 import { queryClient } from './query-client'
 
 const PREFIX_URL = import.meta.env.VITE_PREFIX_URL || '/api'
-let refreshPromise: Promise<void> | null = null
+let refreshPromise: Promise<string | null> | null = null
 let logoutPromise: Promise<void> | null = null
 
-export const refreshAccessToken = () => {
+const refreshAccessToken = () => {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
     try {
-      const response = await ky.post<{ accessToken: string }>(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json()
+      const response = await ky.post(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json<{ accessToken: string }>()
       useAuthStore.getState().setAuthData(response.accessToken)
+      return response.accessToken
+    } catch {
+      return null
     } finally {
       refreshPromise = null
     }
@@ -31,12 +33,12 @@ const redirectToLogin = async () => {
   }
 }
 
-export const logout = () => {
+const logout = () => {
   if (logoutPromise) return logoutPromise
 
   logoutPromise = (async () => {
     try {
-      await _apiInstance.post(`logout`, { credentials: 'include' })
+      await api.post(`logout`, { credentials: 'include' })
     } catch (error) {
       console.error('Logout API failed', error)
     } finally {
@@ -53,7 +55,7 @@ export const logout = () => {
   return logoutPromise
 }
 
-const _apiInstance = ky.create({
+export const api = ky.create({
   prefix: PREFIX_URL,
   retry: 0,
   hooks: {
@@ -65,40 +67,23 @@ const _apiInstance = ky.create({
         }
       },
     ],
+    afterResponse: [
+      async ({ request, response }) => {
+        const pathname = new URL(request.url).pathname
+        const isAuthPath = ['/login', '/logout', '/refresh'].some((path) => pathname.endsWith(path))
+
+        if (response.status === 401 && !isAuthPath) {
+          const newToken = await refreshAccessToken()
+
+          if (newToken) {
+            request.headers.set('Authorization', `Bearer ${newToken}`)
+            return ky(request)
+          } else {
+            await logout()
+            return new Promise(() => {})
+          }
+        }
+      },
+    ],
   },
-})
-
-const _api = async <T = unknown>(request: Input, options?: Options): Promise<T> => {
-  const getCloneRequest = () => (request instanceof Request ? request.clone() : request)
-  const getCloneOptions = () => (options ? { ...options } : undefined)
-
-  try {
-    return await _apiInstance(getCloneRequest(), getCloneOptions()).json<T>()
-  } catch (e) {
-    const error = e as HTTPError
-    const requestUrl = request instanceof Request ? request.url : request.toString()
-    const isAuthPath = requestUrl.includes('/login') || requestUrl.includes('/logout') || requestUrl.includes('/refresh')
-
-    if (error.response?.status === 401 && !isAuthPath) {
-      try {
-        await refreshAccessToken()
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError)
-        await logout()
-        throw refreshError
-      }
-
-      return await _apiInstance(getCloneRequest(), getCloneOptions()).json<T>()
-    }
-
-    throw error
-  }
-}
-
-export const api = Object.assign(_api, {
-  get: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'get' }),
-  post: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'post' }),
-  put: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'put' }),
-  delete: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'delete' }),
-  patch: <T = unknown>(request: Input, options?: Options) => _api<T>(request, { ...options, method: 'patch' }),
 })

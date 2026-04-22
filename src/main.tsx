@@ -8,8 +8,7 @@ import { Toaster } from 'sonner'
 import { router } from './lib/router'
 
 const enableMocking = async () => {
-  if (import.meta.env.VITE_ENABLE_MSW !== 'true') return
-  if (import.meta.env.PROD) return
+  if (import.meta.env.VITE_ENABLE_MSW !== 'true' || import.meta.env.PROD) return
 
   const { worker } = await import('./mocks/browser')
   return worker.start({ onUnhandledRequest: 'bypass' })

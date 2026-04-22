@@ -28,7 +28,7 @@ export const authHandlers = [
 
     if (!refreshToken) return new HttpResponse(null, { status: 401 })
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
     return HttpResponse.json({
       accessToken: 'new-mock-access-token-' + Date.now(),
