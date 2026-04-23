@@ -6,7 +6,7 @@ const PREFIX_URL = import.meta.env.VITE_PREFIX_URL || '/api'
 let refreshPromise: Promise<string | null> | null = null
 let logoutPromise: Promise<void> | null = null
 
-const refreshAccessToken = () => {
+export const refreshAccessToken = () => {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
@@ -14,8 +14,6 @@ const refreshAccessToken = () => {
       const response = await ky.post(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json<{ accessToken: string }>()
       useAuthStore.getState().setAuthData(response.accessToken)
       return response.accessToken
-    } catch {
-      return null
     } finally {
       refreshPromise = null
     }
@@ -73,12 +71,11 @@ export const api = ky.create({
         const isAuthPath = ['/login', '/logout', '/refresh'].some((path) => pathname.endsWith(path))
 
         if (response.status === 401 && !isAuthPath) {
-          const newToken = await refreshAccessToken()
-
-          if (newToken) {
+          try {
+            const newToken = await refreshAccessToken()
             request.headers.set('Authorization', `Bearer ${newToken}`)
             return ky(request)
-          } else {
+          } catch {
             await logout()
             return new Promise(() => {})
           }
