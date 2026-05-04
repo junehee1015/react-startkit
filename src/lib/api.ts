@@ -12,6 +12,9 @@ export const refreshAccessToken = () => {
   refreshPromise = (async () => {
     try {
       const response = await ky.post(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json<{ accessToken: string }>()
+
+      if (logoutPromise) throw new Error('Logout in progress')
+
       useAuthStore.getState().setAuthData(response.accessToken)
       return response.accessToken
     } finally {
