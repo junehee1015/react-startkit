@@ -3,22 +3,28 @@ import { useAuthStore } from '@/features/auth/model'
 import { queryClient } from './query-client'
 
 const PREFIX_URL = import.meta.env.VITE_PREFIX_URL || '/api'
-let refreshPromise: Promise<string | null> | null = null
 let logoutPromise: Promise<void> | null = null
+let refreshPromise: Promise<string | null> | null = null
 
 export const refreshAccessToken = () => {
-  if (refreshPromise) return refreshPromise
+  if (refreshPromise) return refreshPromise // 토근 갱신 중이라면 그대로 return합니다.
 
   refreshPromise = (async () => {
     try {
-      const response = await ky.post(`refresh`, { prefix: PREFIX_URL, credentials: 'include' }).json<{ accessToken: string }>()
+      const response = await ky
+        .post(`refresh`, {
+          prefix: PREFIX_URL,
+          credentials: 'include', // HttpOnly로 설정되어 있는 쿠키를 백엔드로 전송하기 위한 옵션
+        })
+        .json<{ accessToken: string }>()
 
+      // 토큰 갱신 중 로그아웃 시 토큰이 꼬이지 않도록 에러를 던집니다.
       if (logoutPromise) throw new Error('Logout in progress')
 
       useAuthStore.getState().setAuthData(response.accessToken)
       return response.accessToken
     } finally {
-      refreshPromise = null
+      refreshPromise = null // 토큰 갱신 후 초기화합니다.
     }
   })()
 
